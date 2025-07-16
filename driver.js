@@ -1,80 +1,70 @@
 // --- FORM EVENT LISTENER ---
 document.getElementById('financial-form').addEventListener('submit', function(e) {
-    e.preventDefault(); // Evita que la página se recargue
+    e.preventDefault();
 
-    // Recolectar valores del formulario
     const inputs = {
         netGoal: parseFloat(document.getElementById('net-goal').value),
         workHours: parseFloat(document.getElementById('work-hours').value),
         vehicleEfficiency: parseFloat(document.getElementById('vehicle-efficiency').value),
         fuelPrice: parseFloat(document.getElementById('fuel-price').value),
-        commissionRate: parseFloat(document.getElementById('commission-rate').value),
+        pricePerKm: parseFloat(document.getElementById('price-per-km').value),
         maintenanceRate: parseFloat(document.getElementById('maintenance-rate').value),
         otherCosts: parseFloat(document.getElementById('other-costs').value),
     };
 
-    // Validar que todos los campos estén llenos
     if (Object.values(inputs).some(isNaN)) {
         alert('Por favor, complete todos los campos con valores numéricos válidos.');
         return;
     }
 
-    // Orquestar la generación del plan
     const planData = generatePlan(inputs);
     
-    // Si los cálculos fueron exitosos, renderizar las secciones
     if (planData) {
-        renderSummarySection(planData);
-        renderSinglePlatformSection(planData, inputs);
+        renderSummarySection(planData, inputs);
+        renderHotZonesTable(); // Nueva función para la tabla de zonas
         renderOperationalToolSection(planData, inputs);
-        renderTipsSection();
+        renderTipsSection(); // Mantenemos los consejos educativos
 
-        // Mostrar el contenedor de resultados
         document.getElementById('plan-container').style.display = 'block';
-        
-        // Scroll suave hacia los resultados
         document.getElementById('plan-container').scrollIntoView({ behavior: 'smooth' });
     }
 });
 
-// --- CALCULATION LOGIC ---
+// --- LÓGICA DE CÁLCULO (ACTUALIZADA) ---
 function generatePlan(inputs) {
-    const { netGoal, workHours, vehicleEfficiency, fuelPrice, commissionRate, maintenanceRate, otherCosts } = inputs;
+    const { netGoal, workHours, vehicleEfficiency, fuelPrice, maintenanceRate, otherCosts } = inputs;
     
-    // 1. Estimar costo de combustible
-    const estimatedKm = workHours * 20; // Asumiendo 20 km/h en promedio en la ciudad
+    const estimatedKm = workHours * 20; // Asumiendo 20 km/h en ciudad
     const fuelCost = (estimatedKm / vehicleEfficiency) * fuelPrice;
     
-    // 2. Calcular el ingreso bruto requerido
-    const totalDeductionRate = (commissionRate / 100) + (maintenanceRate / 100);
-    if (totalDeductionRate >= 1) {
-         alert("Error: La suma de la comisión y el mantenimiento no puede ser 100% o más.");
-         return null; // Detiene el cálculo
+    // Nueva fórmula para el Ingreso Bruto, sin comisión, como solicitaste.
+    // Resuelve: GrossIncome = NetGoal + FuelCost + OtherCosts + (GrossIncome * MaintenanceRate)
+    const maintenanceDecimal = maintenanceRate / 100;
+    if (maintenanceDecimal >= 1) {
+        alert("Error: El porcentaje de mantenimiento no puede ser 100% o más.");
+        return null;
     }
-    const grossIncome = (netGoal + fuelCost + otherCosts) / (1 - totalDeductionRate);
+    const grossIncome = (netGoal + fuelCost + otherCosts) / (1 - maintenanceDecimal);
 
-    // 3. Desglosar costos basados en el bruto
-    const commissionCost = grossIncome * (commissionRate / 100);
-    const maintenanceCost = grossIncome * (maintenanceRate / 100);
-    const totalCosts = fuelCost + otherCosts + commissionCost + maintenanceCost;
+    const maintenanceCost = grossIncome * maintenanceDecimal;
+    const totalCosts = fuelCost + otherCosts + maintenanceCost;
 
     return {
         grossIncome,
         netGoal,
         fuelCost,
-        commissionCost,
         maintenanceCost,
         otherCosts,
         totalCosts
     };
 }
 
-// --- RENDER FUNCTIONS ---
+// --- FUNCIONES DE RENDERIZADO ---
 
 /**
- * Función 1: Renderiza el resumen financiero.
+ * Renderiza el resumen financiero (Diseño Original).
  */
-function renderSummarySection(data) {
+function renderSummarySection(data, inputs) {
     const container = document.getElementById('summary-section');
     const format = (num) => `RD$ ${num.toFixed(2)}`;
 
@@ -85,8 +75,7 @@ function renderSummarySection(data) {
             <tbody>
                 <tr><td>Meta de Ganancia Neta (Bolsillo)</td><td>${format(data.netGoal)}</td></tr>
                 <tr><td>(+) Costo Estimado de Combustible</td><td>${format(data.fuelCost)}</td></tr>
-                <tr><td>(+) Comisión de Plataformas (${document.getElementById('commission-rate').value}%)</td><td>${format(data.commissionCost)}</td></tr>
-                <tr><td>(+) Ahorro para Mantenimiento (${document.getElementById('maintenance-rate').value}%)</td><td>${format(data.maintenanceCost)}</td></tr>
+                <tr><td>(+) Ahorro para Mantenimiento (${inputs.maintenanceRate}%)</td><td>${format(data.maintenanceCost)}</td></tr>
                 <tr><td>(+) Otros Gastos Fijos</td><td>${format(data.otherCosts)}</td></tr>
                 <tr class="total-row"><td>(=) Ingreso Bruto Requerido (En App)</td><td>${format(data.grossIncome)}</td></tr>
             </tbody>
@@ -95,81 +84,74 @@ function renderSummarySection(data) {
 }
 
 /**
- * Función 2: Compara plataformas y da un veredicto.
+ * NUEVA: Renderiza la tabla de zonas de alta demanda.
  */
-function renderSinglePlatformSection(baseData, inputs) {
-    const container = document.getElementById('single-platform-section');
-    const { netGoal, fuelCost, otherCosts } = baseData;
-    
-    // Fórmula para calcular el bruto con comisión variable
-    const calculateGross = (commission) => (netGoal + fuelCost + otherCosts) / (1 - (commission / 100) - (inputs.maintenanceRate / 100));
+function renderHotZonesTable() {
+    const container = document.getElementById('hot-zones-section');
+    const zones = [
+        { name: 'Piantini / Naco', hours: 'Día (Oficinas) y Noche (Restaurantes)' },
+        { name: 'Zona Colonial', hours: 'Tardes, Noches y Fines de Semana (Turismo)' },
+        { name: 'Ágora Mall / Galerías 360', hours: 'Todo el día, especialmente fines de semana' },
+        { name: 'Megacentro / Sambil', hours: 'Todo el día, especialmente fines de semana' },
+        { name: 'Aeropuerto Las Américas (AILA)', hours: 'Depende de los vuelos (24h)' },
+        { name: 'UASD y zona universitaria', hours: 'Días de semana (Horarios de clase)' },
+        { name: 'Mirador Sur / Bella Vista', hours: 'Noches y fines de semana (Residencial)' },
+        { name: 'Ensanche Ozama', hours: 'Noches y fines de semana (Comercial/Residencial)' }
+    ];
 
-    const grossRequiredDidi = calculateGross(13);
-    const grossRequiredUber = calculateGross(30);
-    const difference = grossRequiredUber - grossRequiredDidi;
+    let rows = zones.map(zone => `<tr><td>${zone.name}</td><td>${zone.hours}</td></tr>`).join('');
 
     container.innerHTML = `
-        <h2>Parte 2: Análisis por Plataforma (Teórico)</h2>
-        <p>Si trabajaras exclusivamente en una plataforma, esto es lo que necesitarías generar en bruto:</p>
-        <ul>
-            <li>Solo con <strong>DiDi (13% comisión)</strong>: Necesitarías generar <span class="highlight">RD$ ${grossRequiredDidi.toFixed(2)}</span></li>
-            <li>Solo con <strong>Uber (30% comisión)</strong>: Necesitarías generar <span class="highlight">RD$ ${grossRequiredUber.toFixed(2)}</span></li>
-        </ul>
-        <hr>
-        <h2>Parte 3: Veredicto Estratégico</h2>
-        <div class="verdict">
-            <p>La diferencia de comisión entre plataformas te obliga a generar <strong>RD$ ${difference.toFixed(2)} adicionales</strong> en Uber para obtener la misma ganancia neta que en DiDi.</p>
-            <p><strong>Conclusión:</strong> Prioriza las solicitudes de DiDi. Usa Uber estratégicamente solo para viajes de alta rentabilidad (tarifas dinámicas, viajes largos bien pagados) que superen tu métrica clave por minuto.</p>
-        </div>
+        <h2>Parte 2: Zonas Estratégicas en Santo Domingo</h2>
+        <p>Posiciónate en estas áreas durante los horarios indicados para aumentar tus probabilidades de conseguir viajes de alta demanda.</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Zona de Alta Demanda</th>
+                    <th>Mejores Horarios</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${rows}
+            </tbody>
+        </table>
     `;
 }
 
 /**
- * Función 3: Crea la herramienta operacional y la tabla de decisión.
+ * Renderiza la Herramienta de Decisión (Mejorada).
  */
 function renderOperationalToolSection(data, inputs) {
     const container = document.getElementById('operational-tool-section');
+    const { grossIncome } = data;
+    const { workHours, pricePerKm } = inputs;
     
-    // 1. Cálculo del Total Ideal a Generar en Apps
-    const inAppTarget = data.grossIncome;
+    const totalMinutes = workHours * 60;
+    const ratePerMinute = grossIncome / totalMinutes; // Tu "salario" bruto por minuto
 
-    // 2. Cálculo de la Métrica Clave: Tarifa por Minuto
-    const totalMinutes = inputs.workHours * 60;
-    const ratePerMinute = inAppTarget / totalMinutes;
-
-    // 3. Generación de la Tabla de Decisión
     let tableRows = '';
     for (let tripEarning = 80; tripEarning <= 500; tripEarning += 30) {
         const maxTime = tripEarning / ratePerMinute;
-        const tripsNeeded = inAppTarget / tripEarning;
+        const maxDistance = tripEarning / pricePerKm;
         tableRows += `
             <tr>
                 <td>RD$ ${tripEarning.toFixed(2)}</td>
-                <td><strong>${Math.floor(maxTime)} min ${Math.round((maxTime % 1) * 60)} seg</strong></td>
-                <td>${Math.ceil(tripsNeeded)} viajes</td>
+                <td><strong>${Math.floor(maxTime)} min</strong></td>
+                <td><strong>${maxDistance.toFixed(1)} Km</strong></td>
             </tr>
         `;
     }
 
     container.innerHTML = `
-        <h2>Parte 4: Herramienta de Decisión Operacional</h2>
-        
-        <h3>4.1. Objetivo Real en App y Métrica Clave</h3>
-        <p>Tu objetivo de facturación en la app no es tu meta neta. Debes cubrir todos tus costos operativos.</p>
-        <p>Total a Generar en Apps: <span class="highlight">RD$ ${inAppTarget.toFixed(2)}</span></p>
-        <p>Tu Métrica Clave de Rentabilidad: <span class="highlight">RD$ ${ratePerMinute.toFixed(2)} por minuto</span></p>
-        <div class="explanation">
-            Esta métrica es tu "salario" por minuto. Cualquier viaje que te ofrezcan debe tener una ganancia por minuto igual o superior a esta cifra para ser rentable. <strong>(Cálculo: Ganancia del viaje / Tiempo total del viaje)</strong>.
-        </div>
-        
-        <h3>4.2. Tabla de Decisión Rápida</h3>
-        <p>Usa esta tabla para decidir en segundos si un viaje vale la pena.</p>
+        <h2>Parte 3: Herramienta de Decisión Rápida</h2>
+        <p>Usa esta tabla para decidir en segundos si un viaje vale la pena según TUS métricas.</p>
+        <p>Tu Métrica Clave de Rentabilidad: <span class="highlight">RD$ ${ratePerMinute.toFixed(2)} por minuto</span> (Bruto)</p>
         <table>
             <thead>
                 <tr>
                     <th>Si el viaje paga...</th>
                     <th>Tiempo MÁXIMO para completarlo</th>
-                    <th>Viajes de este tipo para la meta</th>
+                    <th>Distancia MÁXIMA que debería tener</th>
                 </tr>
             </thead>
             <tbody>
@@ -177,31 +159,22 @@ function renderOperationalToolSection(data, inputs) {
             </tbody>
         </table>
         <div class="explanation">
-            <strong>¿Cómo usar esta tabla?</strong> Cuando recibes una solicitud, mira cuánto paga. Busca ese valor en la primera columna. La segunda columna te dice el tiempo máximo (desde que aceptas hasta que dejas al pasajero) que puedes tardar para que el viaje sea rentable. Si crees que te tomará más tiempo, recházalo.
+            <strong>¿Cómo usar esta tabla?</strong> Cuando recibes una solicitud, compárala. Si un viaje paga RD$ 200, tienes un tiempo máximo para hacerlo rentable y no debería superar la distancia máxima indicada para cumplir tu objetivo de precio por kilómetro.
         </div>
     `;
 }
 
 /**
- * Función 4: Inserta los consejos estratégicos estáticos.
+ * Renderiza los consejos (Diseño Original).
  */
 function renderTipsSection() {
     const container = document.getElementById('tips-section');
     container.innerHTML = `
-        <h2>Parte 5: Consejos Estratégicos Adicionales</h2>
-        
-        <h3>5.1. Mentalidad de Negocio</h3>
+        <h2>Parte 4: Consejos Estratégicos</h2>
         <ul>
-            <li><strong>Eres un Proveedor de Servicios:</strong> Las apps no son tus empleadores, son tus clientes. Te "contratan" para cada viaje. Tú decides si aceptas su oferta (el viaje).</li>
-            <li><strong>El Tiempo es tu Activo Principal:</strong> No lo malgastes en viajes poco rentables o en esperas innecesarias. Siempre evalúa el tiempo total vs. la ganancia.</li>
-            <li><strong>Conoce tu Zona:</strong> Identifica las horas y lugares de alta demanda (universidades, centros comerciales, zonas de oficinas, terminales). Posiciónate allí antes de las horas pico.</li>
-        </ul>
-
-        <h3>5.2. Tácticas Avanzadas</h3>
-        <ul>
-            <li><strong>El "Último Viaje":</strong> Acepta un viaje hacia tu casa al final del día. Es ganancia neta sobre un trayecto que ibas a hacer de todos modos.</li>
-            <li><strong>Gestión de la Tasa de Aceptación:</strong> No temas rechazar viajes malos. Una tasa de aceptación más baja pero con viajes más rentables se traduce en más dinero por menos trabajo y menos gastos.</li>
-            <li><strong>Reevaluación Constante:</strong> Los precios de combustible y la demanda cambian. Vuelve a ejecutar este planificador semanalmente para ajustar tus metas y estrategias.</li>
+            <li><strong>Eres un Proveedor de Servicios:</strong> Las apps son tus clientes, no tus jefes. Tú decides si su oferta (el viaje) es rentable para tu negocio.</li>
+            <li><strong>El Tiempo es tu Activo Principal:</strong> No lo malgastes en viajes poco rentables o en esperas innecesarias. Tu métrica por minuto es tu guía.</li>
+            <li><strong>Reevaluación Constante:</strong> Los precios del combustible y tus costos cambian. Vuelve a ejecutar este planificador para ajustar tus estrategias.</li>
         </ul>
     `;
 }
