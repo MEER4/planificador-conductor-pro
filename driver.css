@@ -1,12 +1,10 @@
 :root {
-    --primary-color: #005A9C; /* Azul corporativo */
-    --secondary-color: #00A9E0; /* Azul claro */
-    --background-color: #f4f7fa; /* Fondo gris claro */
+    --primary-color: #005A9C;
+    --secondary-color: #00A9E0;
+    --background-color: #f4f7fa;
     --card-background: #ffffff;
     --text-color: #333333;
     --header-color: #ffffff;
-    --success-color: #28a745;
-    --danger-color: #dc3545;
     --shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
@@ -85,10 +83,6 @@ button[type="submit"]:hover {
     background-color: #004170;
 }
 
-#plan-container {
-    margin-top: 30px;
-}
-
 table {
     width: 100%;
     border-collapse: collapse;
@@ -121,14 +115,6 @@ tr.total-row td {
     color: var(--primary-color);
     font-weight: bold;
     font-size: 1.2em;
-}
-
-.verdict {
-    margin-top: 20px;
-    padding: 15px;
-    border-radius: 5px;
-    border-left: 5px solid var(--success-color);
-    background-color: #e9f7ef;
 }
 
 .explanation {
