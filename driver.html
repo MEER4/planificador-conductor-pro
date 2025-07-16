@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planificador de Conductor Pro</title>
+    <link rel="stylesheet" href="driver.css">
+</head>
+<body>
+
+    <div class="container">
+        <h1>📊 Planificador de Conductor Pro</h1>
+
+        <div id="control-panel" class="card">
+            <h2>Panel de Control</h2>
+            <form id="financial-form">
+                <div class="form-group">
+                    <label for="net-goal">Meta de Ganancia Neta Diaria (RD$):</label>
+                    <input type="number" id="net-goal" required step="50" placeholder="Ej: 2500">
+                </div>
+                <div class="form-group">
+                    <label for="work-hours">Horas de Trabajo por Día:</label>
+                    <input type="number" id="work-hours" required step="1" placeholder="Ej: 8">
+                </div>
+                <div class="form-group">
+                    <label for="vehicle-efficiency">Eficiencia (Km por Galón):</label>
+                    <input type="number" id="vehicle-efficiency" required step="1" placeholder="Ej: 35">
+                </div>
+                <div class="form-group">
+                    <label for="fuel-price">Precio Combustible (RD$ por Galón):</label>
+                    <input type="number" id="fuel-price" required step="1" placeholder="Ej: 290">
+                </div>
+                <div class="form-group">
+                    <label for="commission-rate">Comisión Promedio de Plataformas (%):</label>
+                    <input type="number" id="commission-rate" value="22" required>
+                </div>
+                <div class="form-group">
+                    <label for="maintenance-rate">Ahorro para Mantenimiento (% del Bruto):</label>
+                    <input type="number" id="maintenance-rate" value="8" required>
+                </div>
+                 <div class="form-group">
+                    <label for="other-costs">Otros Gastos Diarios Fijos (RD$):</label>
+                    <input type="number" id="other-costs" value="450" required placeholder="Plan de datos, dieta, etc.">
+                </div>
+                <button type="submit">Generar Mi Plan</button>
+            </form>
+        </div>
+
+        <div id="plan-container" style="display:none;">
+            <div id="summary-section" class="card"></div>
+            <div id="single-platform-section" class="card"></div>
+            <div id="operational-tool-section" class="card"></div>
+            <div id="tips-section" class="card"></div>
+        </div>
+    </div>
+
+    <script src="driver.js" defer></script>
+</body>
+</html>
